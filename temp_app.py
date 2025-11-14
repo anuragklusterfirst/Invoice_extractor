@@ -2,7 +2,6 @@
 # import json
 # import os
 # import hashlib
-
 # import re
 # import pandas as pd
 # import imaplib
@@ -208,13 +207,22 @@
 #         st.session_state["auth_page"] = "Login"
 #         st.rerun()
 
+# # ---------------- Input Source Page ---------------- #
+# class FakeUpload(io.BytesIO):
+#     def __init__(self, name, content_bytes):
+#         super().__init__(content_bytes)
+#         self.name = name
 
-# # ---------------- Sidebar Fetch History (Global) ---------------- #
-# def sidebar_fetch_history():
+
+# def input_source_page():
+#     st.title("📂 Select Input Source")
 #     st.sidebar.success(f"Logged in as {st.session_state['user_name']}")
+
+#     # --- Show fetch history in sidebar ---
 #     fetch_history = load_fetch_history()
 #     if fetch_history:
 #         st.sidebar.markdown("### 📁 Previous Fetches")
+#         # Group by email
 #         from collections import defaultdict
 #         email_to_ranges = defaultdict(list)
 #         for key, meta in fetch_history.items():
@@ -226,51 +234,42 @@
 #             btn_label = "View/Download 📥"
 #             if st.sidebar.button(btn_label, key=f"view_{email}"):
 #                 st.session_state['show_ranges_for_email'] = email
-#                 # Do not rerun here, let the main page continue
+#                 st.rerun()
+#             # If this email is selected, show its date ranges with delete option
 #             if st.session_state.get('show_ranges_for_email') == email:
-#                 for idx, (start, end, key, meta) in enumerate(sorted(ranges)):
+#                 for start, end, key, meta in sorted(ranges):
 #                     cols = st.sidebar.columns([3,1])
 #                     range_label = f"{start} to {end}"
 #                     with cols[0]:
-#                         if st.button(range_label, key=f"range_{key}_{idx}"):
+#                         if st.button(range_label, key=f"range_{key}"):
 #                             st.session_state['saved_fetch'] = meta
 #                             st.session_state['current_page'] = 'saved_data'
 #                             st.session_state['show_ranges_for_email'] = None
-#                             # Do not rerun here, let the main page continue
+#                             st.rerun()
 #                     with cols[1]:
-#                         if st.button("🗑️", key=f"delete_{key}_{idx}", help="Delete this fetch"):
+#                         if st.button("🗑️", key=f"delete_{key}", help="Delete this fetch"):
+#                             # Remove from fetch_history and save
 #                             fetch_history.pop(key, None)
 #                             save_fetch_history(fetch_history)
 #                             st.session_state['show_ranges_for_email'] = email
-#                             # Do not rerun here, let the main page continue
+#                             st.rerun()
+
 #     if st.sidebar.button("🚪 Logout"):
 #         st.session_state["authenticated"] = False
 #         st.session_state["auth_page"] = "Login"
 #         st.rerun()
 
-
-# # ---------------- Input Source Page ---------------- #
-# class FakeUpload(io.BytesIO):
-#     def __init__(self, name, content_bytes):
-#         super().__init__(content_bytes)
-#         self.name = name
-
-# def input_source_page():
-#     st.title("📂 Select Input Source")
-#     fetch_history = load_fetch_history()
-
 #     input_method = st.radio("Choose Input Method", ["Upload PDFs", "Fetch from Email"])
+#     uploaded_files = []
 
 #     if input_method == "Upload PDFs":
-#         uploaded_files_local = st.file_uploader("Upload PDF invoices", type=["pdf"], accept_multiple_files=True)
-#         if uploaded_files_local:
-#             st.session_state["uploaded_files"] = uploaded_files_local
+#         uploaded_files = st.file_uploader("Upload PDF invoices", type=["pdf"], accept_multiple_files=True)
+#         if uploaded_files:
+#             st.session_state["uploaded_files"] = uploaded_files
+
 #     else:  # Fetch from Email
 #         st.markdown("### 📧 Enter Email Credentials (use App Password for Gmail)")
-#         user_key = st.session_state.get("user_name", "")
-#         last_email_key = f"last_email_{user_key}"
-#         default_email = st.session_state.get(last_email_key, "")
-#         email_user = st.text_input("Email Address", value=default_email)
+#         email_user = st.text_input("Email Address")
 #         email_pass = st.text_input("App Password", type="password")
 #         imap_server = st.text_input("IMAP Server", value="imap.gmail.com")
 
@@ -285,18 +284,18 @@
 
 #         fetch_btn = st.button("📥 Fetch Emails")
 #         if fetch_btn:
-#             st.session_state[last_email_key] = email_user
 #             if not email_user or not email_pass:
 #                 st.error("Please enter both email address and app password.")
 #             elif not start_date or not end_date:
 #                 st.error("Please select a valid date range first.")
 #             else:
+#                 # --- New logic: Only fetch dates not already fetched ---
 #                 from datetime import timedelta
-
 #                 def daterange(start, end):
 #                     for n in range((end - start).days + 1):
 #                         yield start + timedelta(n)
 
+#                 # Collect all already fetched dates for this email
 #                 fetched_dates = set()
 #                 for k in fetch_history:
 #                     em, s, e = k.split("|")
@@ -312,21 +311,26 @@
 #                 already_fetched = [d for d in daterange(req_start, req_end) if d in fetched_dates]
 
 #                 if not to_fetch:
+#                     # All dates already fetched
 #                     st.info("All data for this date range already fetched.")
+#                     # Find the fetch key(s) covering these dates
 #                     for k, meta in fetch_history.items():
 #                         em, s, e = k.split("|")
 #                         if em == email_user:
 #                             s_dt = datetime.datetime.strptime(s, "%Y-%m-%d").date()
 #                             e_dt = datetime.datetime.strptime(e, "%Y-%m-%d").date()
 #                             if s_dt <= req_start and e_dt >= req_end:
-#                                 if st.button(f"View/Download data for {s} to {e}", key=f"viewdl_{k}"):
+#                                 st.markdown(f"[View/Download previously fetched data for {s} to {e}](#)")
+#                                 if st.button(f"Go to {s} to {e}", key=f"goto_{k}"):
 #                                     st.session_state['saved_fetch'] = meta
 #                                     st.session_state['current_page'] = 'saved_data'
 #                                     st.rerun()
 #                     return
 
+#                 # If some dates are already fetched, notify user
 #                 if already_fetched:
 #                     st.info(f"Data for these dates already fetched: {', '.join(str(d) for d in already_fetched)}")
+#                     # Optionally, provide a link to the relevant fetch
 #                     for k, meta in fetch_history.items():
 #                         em, s, e = k.split("|")
 #                         if em == email_user:
@@ -334,51 +338,37 @@
 #                             e_dt = datetime.datetime.strptime(e, "%Y-%m-%d").date()
 #                             overlap = [d for d in already_fetched if s_dt <= d <= e_dt]
 #                             if overlap:
-#                                 if st.button(f"View/Download data for {s} to {e}", key=f"viewdl_{k}"):
+#                                 st.markdown(f"[View/Download data for {s} to {e}](#)")
+#                                 if st.button(f"Go to {s} to {e}", key=f"goto_{k}"):
 #                                     st.session_state['saved_fetch'] = meta
 #                                     st.session_state['current_page'] = 'saved_data'
 #                                     st.rerun()
 
-#                 if to_fetch:
-#                     fetch_start = min(to_fetch)
-#                     fetch_end = max(to_fetch)
-#                     merged_invoices = []
-#                     merged_files = []
-#                     for k, meta in fetch_history.items():
-#                         em, s, e = k.split("|")
-#                         if em == email_user:
-#                             s_dt = datetime.datetime.strptime(s, "%Y-%m-%d").date()
-#                             e_dt = datetime.datetime.strptime(e, "%Y-%m-%d").date()
-#                             if not (e_dt < req_start or s_dt > req_end):
-#                                 merged_invoices.extend(meta.get("invoices", []))
-#                                 merged_files.extend(meta.get("files", []))
-#                     all_files = merged_files[:]
-#                     all_uploaded_files = []
-#                     with st.spinner(f"⏳ Fetching emails for {fetch_start} to {fetch_end}..."):
-#                         resp = fetch_pdfs_from_email(email_user, email_pass, imap_server, "INBOX", fetch_start, fetch_end)
-#                         if "error" in resp:
-#                             st.error(f"❌ Failed to fetch: {resp['error']}")
+#                 # Only fetch the new dates
+#                 fetch_start = min(to_fetch)
+#                 fetch_end = max(to_fetch)
+#                 with st.spinner(f"⏳ Fetching emails for {fetch_start} to {fetch_end}..."):
+#                     resp = fetch_pdfs_from_email(email_user, email_pass, imap_server, "INBOX", fetch_start, fetch_end)
+#                     if "error" in resp:
+#                         st.error(f"❌ Failed to fetch: {resp['error']}")
+#                     else:
+#                         files = resp.get("files", [])
+#                         if not files:
+#                             st.warning("No PDF attachments were found.")
 #                         else:
-#                             files = resp.get("files", [])
-#                             all_files += [fname for fname, _ in files]
-#                             all_uploaded_files += [FakeUpload(fname, content) for fname, content in files]
-#                     st.session_state["uploaded_files"] = all_uploaded_files
-#                     st.session_state["fetch_meta"] = {
-#                         "email": email_user,
-#                         "start_date": str(req_start),
-#                         "end_date": str(req_end),
-#                         "merged_invoices": merged_invoices,
-#                         "merged_files": all_files
-#                     }
+#                             st.success(f"✅ Found {len(files)} PDF attachments")
+#                             st.session_state["uploaded_files"] = [FakeUpload(fname, content) for fname, content in files]
+#                             st.session_state["fetch_meta"] = {
+#                                 "email": email_user,
+#                                 "start_date": str(fetch_start),
+#                                 "end_date": str(fetch_end)
+#                             }
 
-#     uploaded_files = st.session_state.get("uploaded_files", [])
-
-#     if uploaded_files and len(uploaded_files) > 0:
-#         if st.button("➡️ Extract Data"):
-#             st.session_state["current_page"] = "output_options"
-#             st.rerun()
-
-
+#         # Show Next: Extract Data button only after fetch
+#         if st.session_state.get("uploaded_files"):
+#             if st.button("➡️ Next: Extract Data"):
+#                 st.session_state["current_page"] = "output_options"
+#                 st.rerun()
 
 # def send_email_with_attachments(sender_email, sender_pass, recipient_email, subject, body, attachments):
 #     try:
@@ -411,35 +401,13 @@
 #         return False, str(e)
 
 # def output_options_page():
-#     st.markdown('''<style>
-#     div[data-testid="stButton"] > button.minimal-back-btn {
-#         position: fixed;
-#         top: 18px;
-#         right: 24px;
-#         z-index: 9999;
-#         background: #222;
-#         color: #fff;
-#         border: none;
-#         border-radius: 5px;
-#         padding: 6px 12px;
-#         font-size: 1em;
-#         cursor: pointer;
-#         min-width: 0;
-#         box-shadow: none;
-#     }
-#     </style>''', unsafe_allow_html=True)
-#     if st.button("⬅️", key="back_output_options", help="Go back to input selection", type="secondary"):
-#         st.session_state["current_page"] = "input_source"
-#         for key in ["uploaded_files", "fetch_meta", "saved_fetch", "show_ranges_for_email"]:
-#             st.session_state.pop(key, None)
-#         st.rerun()
 #     st.title("📑 Invoice Data Extractor - Output Options")
 #     uploaded_files = st.session_state.get("uploaded_files", [])
-#     fetch_meta = st.session_state.get("fetch_meta", {})
-#     # Use merged_invoices if present (for combined fetches)
-#     valid_invoices = fetch_meta.get("merged_invoices", [])[:]
+#     extracted_data_list = []
+
+#     valid_invoices = []
 #     flattened_rows = []
-#     # Only extract from uploaded_files (newly fetched)
+
 #     for idx, uploaded_file in enumerate(uploaded_files, start=1):
 #         st.subheader(f"📄 {uploaded_file.name}")
 #         try:
@@ -447,6 +415,7 @@
 #         except Exception as e:
 #             st.error(f"Failed to read PDF {uploaded_file.name}: {e}")
 #             continue
+
 #         invoice_data = extract_invoice_data(pdf_text) if is_invoice_text(pdf_text) else None
 #         if isinstance(invoice_data, str):
 #             cleaned = re.sub(r"```json|```", "", invoice_data, flags=re.IGNORECASE).strip()
@@ -457,14 +426,16 @@
 #                 invoice_data = json.loads(cleaned)
 #             except:
 #                 invoice_data = None
+
 #         if not invoice_data or not invoice_data.get("Invoice Number"):
 #             st.warning("⚠️ Skipped: Not a valid invoice or missing Invoice Number.")
 #             continue
+
 #         valid_invoices.append(invoice_data)
 #         st.write(f"**Invoice Number:** {invoice_data.get('Invoice Number')}")
 #         st.write(f"**User Name:** {invoice_data.get('User Name', 'N/A')}")
-#     # Flatten all invoices (merged + new)
-#     for invoice_data in valid_invoices:
+
+#         # Flatten this invoice and add to flattened_rows
 #         invoice_number = invoice_data.get("Invoice Number", "")
 #         user_name = invoice_data.get("User Name", "")
 #         due_date = invoice_data.get("Due Date", "")
@@ -493,6 +464,7 @@
 #                 "Total": "",
 #                 "Invoice Total Amount": total_amount
 #             })
+
 #     if not valid_invoices:
 #         st.info("No valid invoices to download or process.")
 #         return
@@ -508,85 +480,69 @@
 #     combined_xlsx_path = "data/exports/all_invoices.xlsx"
 #     df_flat.to_csv(combined_csv_path, index=False)
 #     df_flat.to_excel(combined_xlsx_path, index=False)
-#     # For instant download, use saved file if exists
-#     if os.path.exists(combined_csv_path):
-#         with open(combined_csv_path, "r", encoding="utf-8") as f:
-#             csv_data = f.read()
-#     else:
-#         csv_buffer = io.StringIO()
-#         df_flat.to_csv(csv_buffer, index=False)
-#         csv_data = csv_buffer.getvalue()
-#     st.download_button("📥 Download All (CSV)", data=csv_data, file_name="all_invoices.csv", mime="text/csv")
-#     if os.path.exists(combined_xlsx_path):
-#         with open(combined_xlsx_path, "rb") as f:
-#             xlsx_data = f.read()
-#     else:
-#         xlsx_buffer = io.BytesIO()
-#         df_flat.to_excel(xlsx_buffer, index=False)
-#         xlsx_data = xlsx_buffer.getvalue()
-#     st.download_button("📥 Download All (Excel)", data=xlsx_data, file_name="all_invoices.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+#     # For instant download
+#     csv_buffer = io.StringIO()
+#     df_flat.to_csv(csv_buffer, index=False)
+#     st.download_button("📥 Download All (CSV)", data=csv_buffer.getvalue(), file_name="all_invoices.csv", mime="text/csv")
+#     xlsx_buffer = io.BytesIO()
+#     df_flat.to_excel(xlsx_buffer, index=False)
+#     st.download_button("📥 Download All (Excel)", data=xlsx_buffer.getvalue(), file_name="all_invoices.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 #     with col2:
-#         # Only show one download button per unique invoice number
-#         seen_invoice_numbers = set()
-#         for idx, invoice in enumerate(valid_invoices, start=1):
-#             inv_num = invoice.get("Invoice Number", f"Invoice_{idx}")
-#             if inv_num in seen_invoice_numbers:
-#                 continue
-#             seen_invoice_numbers.add(inv_num)
-#             safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', str(inv_num))
-#             # Flatten the invoice to row-per-item format
-#             rows = []
-#             invoice_number = invoice.get("Invoice Number", "")
-#             user_name = invoice.get("User Name", "")
-#             due_date = invoice.get("Due Date", "")
-#             total_amount = invoice.get("Total Amount", "")
-#             product_details = invoice.get("Product Details", [])
-#             if isinstance(product_details, list):
-#                 for product in product_details:
+#         if len(valid_invoices) > 1:
+#             for idx, invoice in enumerate(valid_invoices, start=1):
+#                 inv_num = invoice.get("Invoice Number", f"Invoice_{idx}")
+#                 safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', str(inv_num))
+#                 # Flatten the invoice to row-per-item format
+#                 rows = []
+#                 invoice_number = invoice.get("Invoice Number", "")
+#                 user_name = invoice.get("User Name", "")
+#                 due_date = invoice.get("Due Date", "")
+#                 total_amount = invoice.get("Total Amount", "")
+#                 product_details = invoice.get("Product Details", [])
+#                 if isinstance(product_details, list):
+#                     for product in product_details:
+#                         rows.append({
+#                             "Invoice Number": invoice_number,
+#                             "User Name": user_name,
+#                             "Due Date": due_date,
+#                             "Item Name": product.get("name", ""),
+#                             "Quantity": product.get("quantity", ""),
+#                             "Price": product.get("price", ""),
+#                             "Total": product.get("total", ""),
+#                             "Invoice Total Amount": total_amount
+#                         })
+#                 else:
 #                     rows.append({
 #                         "Invoice Number": invoice_number,
 #                         "User Name": user_name,
 #                         "Due Date": due_date,
-#                         "Item Name": product.get("name", ""),
-#                         "Quantity": product.get("quantity", ""),
-#                         "Price": product.get("price", ""),
-#                         "Total": product.get("total", ""),
+#                         "Item Name": "",
+#                         "Quantity": "",
+#                         "Price": "",
+#                         "Total": "",
 #                         "Invoice Total Amount": total_amount
 #                     })
-#             else:
-#                 rows.append({
-#                     "Invoice Number": invoice_number,
-#                     "User Name": user_name,
-#                     "Due Date": due_date,
-#                     "Item Name": "",
-#                     "Quantity": "",
-#                     "Price": "",
-#                     "Total": "",
-#                     "Invoice Total Amount": total_amount
-#                 })
-#             import io
-#             import pandas as pd
-#             df_flat = pd.DataFrame(rows)
-#             csv_buffer = io.StringIO()
-#             df_flat.to_csv(csv_buffer, index=False)
-#             st.download_button(
-#                 f"📥 {safe_name}.csv",
-#                 data=csv_buffer.getvalue(),
-#                 file_name=f"{safe_name}.csv",
-#                 mime="text/csv",
-#                 key=f"invoice_{safe_name}_download"
-#             )
+#                 import io
+#                 import pandas as pd
+#                 df_flat = pd.DataFrame(rows)
+#                 csv_buffer = io.StringIO()
+#                 df_flat.to_csv(csv_buffer, index=False)
+#                 st.download_button(
+#                     f"📥 {safe_name}.csv",
+#                     data=csv_buffer.getvalue(),
+#                     file_name=f"{safe_name}.csv",
+#                     mime="text/csv",
+#                     key=f"invoice_{idx}_download"
+#                 )
 
 #     # Save fetch history if coming from email fetch
 #     if "fetch_meta" in st.session_state:
 #         fetch_meta = st.session_state.pop("fetch_meta")
 #         fetch_key = get_fetch_key(fetch_meta["email"], fetch_meta["start_date"], fetch_meta["end_date"])
 #         fetch_history = load_fetch_history()
-#         # Merge files from fetch_meta if present
-#         files_to_save = fetch_meta.get("merged_files", []) + [f.name for f in uploaded_files]
 #         fetch_history[fetch_key] = {
-#             "files": files_to_save,
+#             "files": [f.name for f in uploaded_files],
 #             "invoices": valid_invoices,
 #             "csv": combined_csv_path,
 #             "xlsx": combined_xlsx_path
@@ -594,7 +550,9 @@
 #         save_fetch_history(fetch_history)
 
 #     # ---------------- Back Button ---------------- #
-
+#     if st.button("⬅️ Back to Input Selection"):
+#         st.session_state["current_page"] = "input_source"
+#         st.rerun()
 
 #     # ---------------- Email Sending ---------------- #
 #     st.markdown("### 📧 Send Valid Invoices via Email")
@@ -624,27 +582,6 @@
 #     if not meta:
 #         st.warning("No saved data selected.")
 #         return
-#     st.markdown('''<style>
-#     div[data-testid="stButton"] > button.minimal-back-btn {
-#         position: fixed;
-#         top: 18px;
-#         right: 24px;
-#         z-index: 9999;
-#         background: #222;
-#         color: #fff;
-#         border: none;
-#         border-radius: 5px;
-#         padding: 6px 12px;
-#         font-size: 1em;
-#         cursor: pointer;
-#         min-width: 0;
-#         box-shadow: none;
-#     }
-#     </style>''', unsafe_allow_html=True)
-#     if st.button("⬅️", key="back_saved_data", help="Go back to input selection", type="secondary"):
-#         st.session_state["current_page"] = "input_source"
-#         st.session_state.pop("saved_fetch", None)
-#         st.rerun()
 #     st.title("📁 Previously Fetched Invoice Data")
 #     st.write("**Invoices:**")
 #     invoices = meta.get("invoices", [])
@@ -758,7 +695,9 @@
 #     xlsx_buffer = io.BytesIO()
 #     df_flat.to_excel(xlsx_buffer, index=False)
 #     st.download_button("📥 Download All (Excel)", data=xlsx_buffer.getvalue(), file_name="all_invoices.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
+#     if st.button("⬅️ Back to Input Selection"):
+#         st.session_state["current_page"] = "input_source"
+#         st.rerun()
 
 #     # --- Email Sending Section ---
 #     st.markdown("### 📧 Send These Invoices via Email")
@@ -805,7 +744,6 @@
 #     else:
 #         signup_page()
 # else:
-#     sidebar_fetch_history()
 #     if st.session_state["current_page"] == "input_source":
 #         input_source_page()
 #     elif st.session_state["current_page"] == "output_options":
@@ -813,14 +751,11 @@
 #     elif st.session_state["current_page"] == "saved_data":
 #         saved_data_page()
 
-        
-
 
 import streamlit as st
 import json
 import os
 import hashlib
-
 import re
 import pandas as pd
 import imaplib
@@ -836,12 +771,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 
-# ➕ NEW: Import Zoho integration helper
-import zoho_integration
-
+# ---------------- Fetch History Helpers ---------------- #
 FETCH_HISTORY_FILE = "data/fetch_history.json"
-USERS_FILE = "users.json"
-
 
 def load_fetch_history():
     if os.path.exists(FETCH_HISTORY_FILE):
@@ -849,14 +780,16 @@ def load_fetch_history():
             return json.load(f)
     return {}
 
-
 def save_fetch_history(history):
     with open(FETCH_HISTORY_FILE, "w") as f:
         json.dump(history, f, indent=4)
 
-
 def get_fetch_key(email, start_date, end_date):
     return f"{email}|{start_date}|{end_date}"
+
+
+# ---------------- Utility Functions ---------------- #
+USERS_FILE = "users.json"
 
 def load_users():
     if os.path.exists(USERS_FILE):
@@ -891,6 +824,7 @@ def add_user(name, email, password):
 def check_user(identifier, password):
     users = load_users()
     hashed = make_hash(password)
+    # Check if identifier is an email/username in users
     if identifier in users:
         user_record = users[identifier]
         if isinstance(user_record, dict):
@@ -900,14 +834,17 @@ def check_user(identifier, password):
                 raise ValueError("Invalid password.")
         else:
             raise ValueError("Corrupted user record. Please contact support.")
+    # Check by username
     for info in users.values():
         if isinstance(info, dict) and info.get("name", "").lower() == identifier.lower():
             if info.get("password") == hashed:
                 return info
             else:
                 raise ValueError("Invalid password.")
+    # If not found
     raise ValueError("User not found. Please sign up first.")
 
+# ---------------- Helper to fetch PDFs from Email ---------------- #
 def _decode_header_part(hdr):
     try:
         dh = decode_header(hdr)
@@ -931,14 +868,17 @@ def fetch_pdfs_from_email(email_user, email_pass, imap_server="imap.gmail.com", 
             start_str = start_date.strftime("%d-%b-%Y")
             end_str = (end_date + datetime.timedelta(days=1)).strftime("%d-%b-%Y")
             search_criteria = f'(SINCE {start_str} BEFORE {end_str})'
+
         status, messages = mail.search(None, search_criteria)
         if status != "OK":
             mail.logout()
             return {"error": f"IMAP search failed with status {status}"}
+
         email_ids = messages[0].split()
         if not email_ids:
             mail.logout()
             return {"files": []}
+
         pdf_files = []
         progress_bar = st.progress(0, text="Fetching emails...")
         for idx, e_id in enumerate(email_ids, start=1):
@@ -969,13 +909,14 @@ def fetch_pdfs_from_email(email_user, email_pass, imap_server="imap.gmail.com", 
     except Exception as e:
         return {"error": f"Unexpected error: {str(e)}"}
 
-
+# ---------------- Authentication Pages ---------------- #
 def login_page():
     st.title("🔐 Login to Invoice Data Extractor")
     with st.form("login_form"):
         identifier = st.text_input("Email or Username")
         password = st.text_input("Password", type="password")
         login_btn = st.form_submit_button("Login")
+
     if login_btn:
         try:
             user = check_user(identifier, password)
@@ -988,6 +929,7 @@ def login_page():
             st.error(str(ve))
         except Exception as e:
             st.error("An unexpected error occurred. Please contact support.")
+
     if st.button("👉 Don't have an account? Sign Up"):
         st.session_state["auth_page"] = "Sign Up"
         st.rerun()
@@ -1000,6 +942,7 @@ def signup_page():
         password = st.text_input("Password", type="password")
         confirm_password = st.text_input("Confirm Password", type="password")
         submit = st.form_submit_button("Sign Up")
+
     if submit:
         if not validate_email(email_id):
             st.error("❌ Please enter a valid email address.")
@@ -1013,10 +956,13 @@ def signup_page():
             st.rerun()
         else:
             st.error("User already exists with this email.")
+
     if st.button("🔑 Already have an account? Login"):
         st.session_state["auth_page"] = "Login"
         st.rerun()
 
+
+# ---------------- Sidebar Fetch History (Global) ---------------- #
 def sidebar_fetch_history():
     st.sidebar.success(f"Logged in as {st.session_state['user_name']}")
     fetch_history = load_fetch_history()
@@ -1027,11 +973,13 @@ def sidebar_fetch_history():
         for key, meta in fetch_history.items():
             email, start, end = key.split("|")
             email_to_ranges[email].append((start, end, key, meta))
+
         for email, ranges in email_to_ranges.items():
             st.sidebar.markdown(f"<span style='font-size: 0.95em;'>{email}</span>", unsafe_allow_html=True)
             btn_label = "View/Download 📥"
             if st.sidebar.button(btn_label, key=f"view_{email}"):
                 st.session_state['show_ranges_for_email'] = email
+                # Do not rerun here, let the main page continue
             if st.session_state.get('show_ranges_for_email') == email:
                 for idx, (start, end, key, meta) in enumerate(sorted(ranges)):
                     cols = st.sidebar.columns([3,1])
@@ -1041,16 +989,20 @@ def sidebar_fetch_history():
                             st.session_state['saved_fetch'] = meta
                             st.session_state['current_page'] = 'saved_data'
                             st.session_state['show_ranges_for_email'] = None
+                            # Do not rerun here, let the main page continue
                     with cols[1]:
                         if st.button("🗑️", key=f"delete_{key}_{idx}", help="Delete this fetch"):
                             fetch_history.pop(key, None)
                             save_fetch_history(fetch_history)
                             st.session_state['show_ranges_for_email'] = email
+                            # Do not rerun here, let the main page continue
     if st.sidebar.button("🚪 Logout"):
         st.session_state["authenticated"] = False
         st.session_state["auth_page"] = "Login"
         st.rerun()
 
+
+# ---------------- Input Source Page ---------------- #
 class FakeUpload(io.BytesIO):
     def __init__(self, name, content_bytes):
         super().__init__(content_bytes)
@@ -1060,19 +1012,21 @@ def input_source_page():
     st.title("📂 Select Input Source")
     fetch_history = load_fetch_history()
 
+
     input_method = st.radio("Choose Input Method", ["Upload PDFs", "Fetch from Email"])
+    uploaded_files = []
+
     if input_method == "Upload PDFs":
-        uploaded_files_local = st.file_uploader("Upload PDF invoices", type=["pdf"], accept_multiple_files=True)
-        if uploaded_files_local:
-            st.session_state["uploaded_files"] = uploaded_files_local
-    else:
+        uploaded_files = st.file_uploader("Upload PDF invoices", type=["pdf"], accept_multiple_files=True)
+        if uploaded_files:
+            st.session_state["uploaded_files"] = uploaded_files
+
+    else:  # Fetch from Email
         st.markdown("### 📧 Enter Email Credentials (use App Password for Gmail)")
-        user_key = st.session_state.get("user_name", "")
-        last_email_key = f"last_email_{user_key}"
-        default_email = st.session_state.get(last_email_key, "")
-        email_user = st.text_input("Email Address", value=default_email)
+        email_user = st.text_input("Email Address")
         email_pass = st.text_input("App Password", type="password")
         imap_server = st.text_input("IMAP Server", value="imap.gmail.com")
+
         today = datetime.date.today()
         date_input = st.date_input(
             "Select date range:",
@@ -1081,18 +1035,21 @@ def input_source_page():
             max_value=today
         )
         start_date, end_date = date_input if isinstance(date_input, tuple) and len(date_input) == 2 else (None, None)
+
         fetch_btn = st.button("📥 Fetch Emails")
         if fetch_btn:
-            st.session_state[last_email_key] = email_user
             if not email_user or not email_pass:
                 st.error("Please enter both email address and app password.")
             elif not start_date or not end_date:
                 st.error("Please select a valid date range first.")
             else:
+                # --- New logic: Only fetch dates not already fetched ---
                 from datetime import timedelta
                 def daterange(start, end):
                     for n in range((end - start).days + 1):
                         yield start + timedelta(n)
+
+                # Collect all already fetched dates for this email
                 fetched_dates = set()
                 for k in fetch_history:
                     em, s, e = k.split("|")
@@ -1101,12 +1058,16 @@ def input_source_page():
                         e_dt = datetime.datetime.strptime(e, "%Y-%m-%d").date()
                         for d in daterange(s_dt, e_dt):
                             fetched_dates.add(d)
+
                 req_start = start_date
                 req_end = end_date
                 to_fetch = [d for d in daterange(req_start, req_end) if d not in fetched_dates]
                 already_fetched = [d for d in daterange(req_start, req_end) if d in fetched_dates]
+
                 if not to_fetch:
+                    # All dates already fetched
                     st.info("All data for this date range already fetched.")
+                    # Find the fetch key(s) covering these dates
                     for k, meta in fetch_history.items():
                         em, s, e = k.split("|")
                         if em == email_user:
@@ -1118,8 +1079,11 @@ def input_source_page():
                                     st.session_state['current_page'] = 'saved_data'
                                     st.rerun()
                     return
+
+                # If some dates are already fetched, notify user
                 if already_fetched:
                     st.info(f"Data for these dates already fetched: {', '.join(str(d) for d in already_fetched)}")
+                    # Provide a button to view/download the relevant fetch
                     for k, meta in fetch_history.items():
                         em, s, e = k.split("|")
                         if em == email_user:
@@ -1131,7 +1095,10 @@ def input_source_page():
                                     st.session_state['saved_fetch'] = meta
                                     st.session_state['current_page'] = 'saved_data'
                                     st.rerun()
+
+                # Only fetch the new dates (to_fetch)
                 if to_fetch:
+                    # Fetch all unfetched dates in a single call as a range
                     fetch_start = min(to_fetch)
                     fetch_end = max(to_fetch)
                     merged_invoices = []
@@ -1162,11 +1129,13 @@ def input_source_page():
                         "merged_invoices": merged_invoices,
                         "merged_files": all_files
                     }
-    uploaded_files = st.session_state.get("uploaded_files", [])
-    if uploaded_files and len(uploaded_files) > 0:
-        if st.button("➡️ Extract Data"):
-            st.session_state["current_page"] = "output_options"
-            st.rerun()
+
+        # Show Next: Extract Data button if there are any files to process (even if some dates are already fetched)
+        uploaded_files = st.session_state.get("uploaded_files")
+        if uploaded_files is not None and len(uploaded_files) > 0:
+            if st.button("➡️ Next: Extract Data"):
+                st.session_state["current_page"] = "output_options"
+                st.rerun()
 
 def send_email_with_attachments(sender_email, sender_pass, recipient_email, subject, body, attachments):
     try:
@@ -1174,8 +1143,12 @@ def send_email_with_attachments(sender_email, sender_pass, recipient_email, subj
         msg['From'] = sender_email
         msg['To'] = recipient_email
         msg['Subject'] = subject
+
+        # Attach the email body
         msg.attach(MIMEBase('text', 'plain'))
         msg.attachments = []
+
+        # Attach files
         for file_path in attachments:
             part = MIMEBase('application', 'octet-stream')
             with open(file_path, 'rb') as f:
@@ -1183,6 +1156,8 @@ def send_email_with_attachments(sender_email, sender_pass, recipient_email, subj
             encoders.encode_base64(part)
             part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(file_path)}')
             msg.attach(part)
+
+        # Connect and send
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(sender_email, sender_pass)
@@ -1193,33 +1168,13 @@ def send_email_with_attachments(sender_email, sender_pass, recipient_email, subj
         return False, str(e)
 
 def output_options_page():
-    st.markdown('''<style>
-    div[data-testid="stButton"] > button.minimal-back-btn {
-        position: fixed;
-        top: 18px;
-        right: 24px;
-        z-index: 9999;
-        background: #222;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 6px 12px;
-        font-size: 1em;
-        cursor: pointer;
-        min-width: 0;
-        box-shadow: none;
-    }
-    </style>''', unsafe_allow_html=True)
-    if st.button("⬅️", key="back_output_options", help="Go back to input selection", type="secondary"):
-        st.session_state["current_page"] = "input_source"
-        for key in ["uploaded_files", "fetch_meta", "saved_fetch", "show_ranges_for_email"]:
-            st.session_state.pop(key, None)
-        st.rerun()
     st.title("📑 Invoice Data Extractor - Output Options")
     uploaded_files = st.session_state.get("uploaded_files", [])
     fetch_meta = st.session_state.get("fetch_meta", {})
+    # Use merged_invoices if present (for combined fetches)
     valid_invoices = fetch_meta.get("merged_invoices", [])[:]
     flattened_rows = []
+    # Only extract from uploaded_files (newly fetched)
     for idx, uploaded_file in enumerate(uploaded_files, start=1):
         st.subheader(f"📄 {uploaded_file.name}")
         try:
@@ -1229,7 +1184,7 @@ def output_options_page():
             continue
         invoice_data = extract_invoice_data(pdf_text) if is_invoice_text(pdf_text) else None
         if isinstance(invoice_data, str):
-            cleaned = re.sub(r"``````", "", invoice_data, flags=re.IGNORECASE).strip()
+            cleaned = re.sub(r"```json|```", "", invoice_data, flags=re.IGNORECASE).strip()
             json_match = re.search(r"\{.*\}", cleaned, re.DOTALL)
             if json_match:
                 cleaned = json_match.group(0)
@@ -1243,6 +1198,7 @@ def output_options_page():
         valid_invoices.append(invoice_data)
         st.write(f"**Invoice Number:** {invoice_data.get('Invoice Number')}")
         st.write(f"**User Name:** {invoice_data.get('User Name', 'N/A')}")
+    # Flatten all invoices (merged + new)
     for invoice_data in valid_invoices:
         invoice_number = invoice_data.get("Invoice Number", "")
         user_name = invoice_data.get("User Name", "")
@@ -1276,14 +1232,18 @@ def output_options_page():
         st.info("No valid invoices to download or process.")
         return
 
+    # ---------------- Download Options ---------------- #
     st.markdown("### ⬇️ Download Options")
     col1, col2 = st.columns(2)
     import io
+    import pandas as pd
     df_flat = pd.DataFrame(flattened_rows)
+    # Save CSV/XLSX to disk for fetch history and email attachments
     combined_csv_path = "data/exports/all_invoices.csv"
     combined_xlsx_path = "data/exports/all_invoices.xlsx"
     df_flat.to_csv(combined_csv_path, index=False)
     df_flat.to_excel(combined_xlsx_path, index=False)
+    # For instant download, use saved file if exists
     if os.path.exists(combined_csv_path):
         with open(combined_csv_path, "r", encoding="utf-8") as f:
             csv_data = f.read()
@@ -1302,6 +1262,7 @@ def output_options_page():
     st.download_button("📥 Download All (Excel)", data=xlsx_data, file_name="all_invoices.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     with col2:
+        # Only show one download button per unique invoice number
         seen_invoice_numbers = set()
         for idx, invoice in enumerate(valid_invoices, start=1):
             inv_num = invoice.get("Invoice Number", f"Invoice_{idx}")
@@ -1309,6 +1270,7 @@ def output_options_page():
                 continue
             seen_invoice_numbers.add(inv_num)
             safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', str(inv_num))
+            # Flatten the invoice to row-per-item format
             rows = []
             invoice_number = invoice.get("Invoice Number", "")
             user_name = invoice.get("User Name", "")
@@ -1338,6 +1300,8 @@ def output_options_page():
                     "Total": "",
                     "Invoice Total Amount": total_amount
                 })
+            import io
+            import pandas as pd
             df_flat = pd.DataFrame(rows)
             csv_buffer = io.StringIO()
             df_flat.to_csv(csv_buffer, index=False)
@@ -1349,40 +1313,12 @@ def output_options_page():
                 key=f"invoice_{safe_name}_download"
             )
 
-    # ➕ NEW: Zoho Integration Buttons
-    st.markdown("### 🔄 Zoho Invoice Integration")
-    colz1, colz2 = st.columns(2)
-    with colz1:
-        if st.button("📤 Send Extracted Invoices to Zoho"):
-            if not valid_invoices:
-                st.warning("No valid invoices to send.")
-            else:
-                all_success = True
-                errors = []
-                for invoice in valid_invoices:
-                    success, resp = zoho_integration.create_invoice(invoice)
-                    if not success:
-                        all_success = False
-                        errors.append(resp)
-                if all_success:
-                    st.success("All invoices sent to Zoho successfully!")
-                else:
-                    st.error(f"Errors encountered: {errors}")
-    with colz2:
-        if st.button("📥 Fetch Invoices from Zoho"):
-            success, data = zoho_integration.get_invoices()
-            if success:
-                invoices = data.get("invoices", [])
-                st.write(f"Fetched {len(invoices)} invoices from Zoho:")
-                for inv in invoices:
-                    st.write(inv)
-            else:
-                st.error(f"Failed to fetch invoices: {data}")
-
+    # Save fetch history if coming from email fetch
     if "fetch_meta" in st.session_state:
         fetch_meta = st.session_state.pop("fetch_meta")
         fetch_key = get_fetch_key(fetch_meta["email"], fetch_meta["start_date"], fetch_meta["end_date"])
         fetch_history = load_fetch_history()
+        # Merge files from fetch_meta if present
         files_to_save = fetch_meta.get("merged_files", []) + [f.name for f in uploaded_files]
         fetch_history[fetch_key] = {
             "files": files_to_save,
@@ -1392,6 +1328,15 @@ def output_options_page():
         }
         save_fetch_history(fetch_history)
 
+    # ---------------- Back Button ---------------- #
+    if st.button("⬅️ Back to Input Selection"):
+        st.session_state["current_page"] = "input_source"
+        # Clear all session state related to fetch/upload to avoid re-processing
+        for key in ["uploaded_files", "fetch_meta", "saved_fetch", "show_ranges_for_email"]:
+            st.session_state.pop(key, None)
+        st.rerun()
+
+    # ---------------- Email Sending ---------------- #
     st.markdown("### 📧 Send Valid Invoices via Email")
     with st.form("email_form"):
         sender_email = st.text_input("Your Email (Gmail recommended)")
@@ -1400,6 +1345,7 @@ def output_options_page():
         email_subject = st.text_input("Subject", "Invoice Data")
         email_body = st.text_area("Email Body", "Hello,\n\nPlease find the attached invoice data.\n\nRegards")
         send_btn = st.form_submit_button("Send Email")
+
     if send_btn:
         attachments = [combined_csv_path, combined_xlsx_path]
         if not sender_email or not sender_pass or not recipient_email:
@@ -1412,37 +1358,19 @@ def output_options_page():
                 else:
                     st.error("❌ " + msg)
 
+# ---------------- Saved Data Page ---------------- #
 def saved_data_page():
     meta = st.session_state.get('saved_fetch')
     if not meta:
         st.warning("No saved data selected.")
         return
-    st.markdown('''<style>
-    div[data-testid="stButton"] > button.minimal-back-btn {
-        position: fixed;
-        top: 18px;
-        right: 24px;
-        z-index: 9999;
-        background: #222;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 6px 12px;
-        font-size: 1em;
-        cursor: pointer;
-        min-width: 0;
-        box-shadow: none;
-    }
-    </style>''', unsafe_allow_html=True)
-    if st.button("⬅️", key="back_saved_data", help="Go back to input selection", type="secondary"):
-        st.session_state["current_page"] = "input_source"
-        st.session_state.pop("saved_fetch", None)
-        st.rerun()
     st.title("📁 Previously Fetched Invoice Data")
     st.write("**Invoices:**")
     invoices = meta.get("invoices", [])
     import io
+    import pandas as pd
     import re
+    # Show fetch date range at the top
     fetch_key = None
     fetch_history = load_fetch_history()
     for k, v in fetch_history.items():
@@ -1452,7 +1380,7 @@ def saved_data_page():
     fetch_range = ""
     if fetch_key:
         email, start, end = fetch_key.split("|")
-        fetch_range = f"**Fetched for:** {email}  **Date Range:** {start} to {end}"
+        fetch_range = f"**Fetched for:** {email}  **Date Range:** {start} to {end}"
         st.markdown(fetch_range)
     st.markdown("### Invoice Details")
     for idx, inv in enumerate(invoices, start=1):
@@ -1462,6 +1390,7 @@ def saved_data_page():
             st.write(f"**User Name:** {inv.get('User Name', 'N/A')}")
         with col2:
             safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', str(inv.get("Invoice Number", f"Invoice_{idx}")))
+            # Flatten the invoice to row-per-item format
             rows = []
             invoice_number = inv.get("Invoice Number", "")
             user_name = inv.get("User Name", "")
@@ -1491,6 +1420,8 @@ def saved_data_page():
                     "Total": "",
                     "Invoice Total Amount": total_amount
                 })
+            import io
+            import pandas as pd
             df_flat = pd.DataFrame(rows)
             csv_buffer = io.StringIO()
             df_flat.to_csv(csv_buffer, index=False)
@@ -1501,8 +1432,14 @@ def saved_data_page():
                 mime="text/csv",
                 key=f"invoice_{idx}_download"
             )
+    # Download all invoices as one file if possible
+    # Always provide download for all invoices in memory, even if files are missing
     import io
     import pandas as pd
+    from utils.csv_helper import save_to_csv
+    # Flatten invoices to row-per-item format
+    invoices = meta.get("invoices", [])
+    # Use the same logic as save_to_csv but in-memory
     rows = []
     for invoice in invoices:
         invoice_number = invoice.get("Invoice Number", "")
@@ -1540,7 +1477,13 @@ def saved_data_page():
     xlsx_buffer = io.BytesIO()
     df_flat.to_excel(xlsx_buffer, index=False)
     st.download_button("📥 Download All (Excel)", data=xlsx_buffer.getvalue(), file_name="all_invoices.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    if st.button("⬅️ Back to Input Selection"):
+        st.session_state["current_page"] = "input_source"
+        # Clear saved_fetch to avoid re-processing
+        st.session_state.pop("saved_fetch", None)
+        st.rerun()
 
+    # --- Email Sending Section ---
     st.markdown("### 📧 Send These Invoices via Email")
     with st.form("saved_email_form"):
         sender_email = st.text_input("Your Email (Gmail recommended)", key="saved_sender_email")
@@ -1549,10 +1492,12 @@ def saved_data_page():
         email_subject = st.text_input("Subject", "Invoice Data", key="saved_email_subject")
         email_body = st.text_area("Email Body", "Hello,\n\nPlease find the attached invoice data.\n\nRegards", key="saved_email_body")
         send_btn = st.form_submit_button("Send Email")
+
     if send_btn:
         attachments = []
         if "csv" in meta and os.path.exists(meta["csv"]):
             attachments.append(meta["csv"])
+            # Always generate Excel from the normalized CSV for email
             import pandas as pd
             combined_xlsx = "all_invoices.xlsx"
             df_flat = pd.read_csv(meta["csv"])
@@ -1569,38 +1514,7 @@ def saved_data_page():
                     st.success("✅ " + msg)
                 else:
                     st.error("❌ " + msg)
-
-    # ➕ NEW: Zoho Integration Buttons
-    st.markdown("### 🔄 Zoho Invoice Integration for Saved Data")
-    sc1, sc2 = st.columns(2)
-    with sc1:
-        if st.button("📤 Send Saved Invoices to Zoho"):
-            invoices = meta.get("invoices", [])
-            if not invoices:
-                st.warning("No invoices to send.")
-            else:
-                all_success = True
-                errors = []
-                for invoice in invoices:
-                    success, resp = zoho_integration.create_invoice(invoice)
-                    if not success:
-                        all_success = False
-                        errors.append(resp)
-                if all_success:
-                    st.success("All saved invoices sent to Zoho successfully!")
-                else:
-                    st.error(f"Errors encountered: {errors}")
-    with sc2:
-        if st.button("📥 Fetch Invoices from Zoho"):
-            success, data = zoho_integration.get_invoices()
-            if success:
-                invoices = data.get("invoices", [])
-                st.write(f"Fetched {len(invoices)} invoices from Zoho:")
-                for inv in invoices:
-                    st.write(inv)
-            else:
-                st.error(f"Failed to fetch invoices: {data}")
-
+# ---------------- Main Controller ---------------- #
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 if "auth_page" not in st.session_state:

@@ -1,0 +1,384 @@
+{
+    "anurag2000gupta@gmail.com|2025-08-27|2025-08-30": {
+        "files": [
+            "sample_invoice_1.pdf",
+            "sample_invoice_3.pdf",
+            "capbudg.pdf",
+            "Resume (2).pdf",
+            "sample_invoice.pdf",
+            "sample_invoice_1.pdf",
+            "sample_invoice_3.pdf",
+            "capbudg.pdf",
+            "Resume (2).pdf",
+            "sample_invoice.pdf"
+        ],
+        "invoices": [
+            {
+                "Invoice Number": "INV-2025-001",
+                "User Name": "Rahul Mehta",
+                "Billing Address": {
+                    "Company": "Tech Solutions Pvt. Ltd.",
+                    "Address": "456 AI Lane, Bengaluru, India",
+                    "Email": "anurag@example.com",
+                    "Phone": "+91 9876543210"
+                },
+                "Due Date": "2025-09-15",
+                "Payment Terms": "Net 15 Days",
+                "Currency": "USD",
+                "Tax Amount": 872.87,
+                "Product Details": [
+                    {
+                        "name": "Keyboard",
+                        "quantity": 1,
+                        "price": 1347.3,
+                        "total": 1347.3
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 3,
+                        "price": 1239.0,
+                        "total": 1239.0
+                    },
+                    {
+                        "name": "Monitor",
+                        "quantity": 4,
+                        "price": 1890.4,
+                        "total": 1890.4
+                    },
+                    {
+                        "name": "Laptop",
+                        "quantity": 1,
+                        "price": 372.6,
+                        "total": 372.6
+                    }
+                ],
+                "Total Amount": 5722.17
+            },
+            {
+                "Invoice Number": "INV-2025-003",
+                "User Name": "Rahul Mehta",
+                "Billing Address": {
+                    "Company": "Tech Solutions Pvt. Ltd.",
+                    "Address": "456 AI Lane, Bengaluru, India",
+                    "Email": "anurag@example.com",
+                    "Phone": "+91 9876543210"
+                },
+                "Due Date": "2025-09-15",
+                "Payment Terms": "Net 15 Days",
+                "Currency": "USD",
+                "Tax Amount": 505.48,
+                "Product Details": [
+                    {
+                        "name": "Software License",
+                        "quantity": 1,
+                        "price": 83,
+                        "total": 83.0
+                    },
+                    {
+                        "name": "Monitor",
+                        "quantity": 3,
+                        "price": 265,
+                        "total": 755.25
+                    },
+                    {
+                        "name": "Headset",
+                        "quantity": 1,
+                        "price": 1165,
+                        "total": 1048.5
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 1,
+                        "price": 970,
+                        "total": 921.5
+                    }
+                ],
+                "Total Amount": 3313.74
+            },
+            {
+                "Invoice Number": "INV-2025-001",
+                "User Name": "Anurag Gupta",
+                "Billing Address": "123 Tech Street, Delhi, India",
+                "Due Date": "2025-09-10",
+                "Payment Terms": null,
+                "Currency": "USD",
+                "Tax Amount": 109,
+                "Product Details": [
+                    {
+                        "name": "Laptop",
+                        "quantity": 1,
+                        "price": 1000,
+                        "total": 1000
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 2,
+                        "price": 20,
+                        "total": 40
+                    },
+                    {
+                        "name": "Keyboard",
+                        "quantity": 1,
+                        "price": 50,
+                        "total": 50
+                    }
+                ],
+                "Total Amount": 1199
+            }
+        ],
+        "csv": "data/exports/all_invoices.csv",
+        "xlsx": "data/exports/all_invoices.xlsx"
+    },
+    "anurag2000gupta@gmail.com|2025-08-23|2025-08-31": {
+        "files": [
+            "sample_invoice_1.pdf",
+            "sample_invoice_3.pdf",
+            "capbudg.pdf",
+            "Resume (2).pdf",
+            "sample_invoice.pdf",
+            "sample_invoice_1.pdf",
+            "sample_invoice_3.pdf",
+            "capbudg.pdf",
+            "Resume (2).pdf",
+            "sample_invoice.pdf",
+            "sample_invoice_1.pdf",
+            "sample_invoice_3.pdf",
+            "capbudg.pdf",
+            "Resume (2).pdf",
+            "sample_invoice.pdf",
+            "sample_invoice_1.pdf",
+            "sample_invoice_3.pdf",
+            "capbudg.pdf",
+            "Resume (2).pdf",
+            "sample_invoice.pdf"
+        ],
+        "invoices": [
+            {
+                "Invoice Number": "INV-2025-001",
+                "User Name": "Rahul Mehta",
+                "Billing Address": {
+                    "Company": "Tech Solutions Pvt. Ltd.",
+                    "Address": "456 AI Lane, Bengaluru, India",
+                    "Email": "anurag@example.com",
+                    "Phone": "+91 9876543210"
+                },
+                "Due Date": "2025-09-15",
+                "Payment Terms": "Net 15 Days",
+                "Currency": "USD",
+                "Tax Amount": 872.87,
+                "Product Details": [
+                    {
+                        "name": "Keyboard",
+                        "quantity": 1,
+                        "price": 1347.3,
+                        "total": 1347.3
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 3,
+                        "price": 1239.0,
+                        "total": 1239.0
+                    },
+                    {
+                        "name": "Monitor",
+                        "quantity": 4,
+                        "price": 1890.4,
+                        "total": 1890.4
+                    },
+                    {
+                        "name": "Laptop",
+                        "quantity": 1,
+                        "price": 372.6,
+                        "total": 372.6
+                    }
+                ],
+                "Total Amount": 5722.17
+            },
+            {
+                "Invoice Number": "INV-2025-003",
+                "User Name": "Rahul Mehta",
+                "Billing Address": {
+                    "Company": "Tech Solutions Pvt. Ltd.",
+                    "Address": "456 AI Lane, Bengaluru, India",
+                    "Email": "anurag@example.com",
+                    "Phone": "+91 9876543210"
+                },
+                "Due Date": "2025-09-15",
+                "Payment Terms": "Net 15 Days",
+                "Currency": "USD",
+                "Tax Amount": 505.48,
+                "Product Details": [
+                    {
+                        "name": "Software License",
+                        "quantity": 1,
+                        "price": 83,
+                        "total": 83.0
+                    },
+                    {
+                        "name": "Monitor",
+                        "quantity": 3,
+                        "price": 265,
+                        "total": 755.25
+                    },
+                    {
+                        "name": "Headset",
+                        "quantity": 1,
+                        "price": 1165,
+                        "total": 1048.5
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 1,
+                        "price": 970,
+                        "total": 921.5
+                    }
+                ],
+                "Total Amount": 3313.74
+            },
+            {
+                "Invoice Number": "INV-2025-001",
+                "User Name": "Anurag Gupta",
+                "Billing Address": "123 Tech Street, Delhi, India",
+                "Due Date": "2025-09-10",
+                "Payment Terms": null,
+                "Currency": "USD",
+                "Tax Amount": 109,
+                "Product Details": [
+                    {
+                        "name": "Laptop",
+                        "quantity": 1,
+                        "price": 1000,
+                        "total": 1000
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 2,
+                        "price": 20,
+                        "total": 40
+                    },
+                    {
+                        "name": "Keyboard",
+                        "quantity": 1,
+                        "price": 50,
+                        "total": 50
+                    }
+                ],
+                "Total Amount": 1199
+            },
+            {
+                "Invoice Number": "INV-2025-001",
+                "User Name": "Rahul Mehta",
+                "Billing Address": {
+                    "Company": "Tech Solutions Pvt. Ltd.",
+                    "Address": "456 AI Lane, Bengaluru, India",
+                    "Email": "anurag@example.com",
+                    "Phone": "+91 9876543210"
+                },
+                "Due Date": "2025-09-15",
+                "Payment Terms": "Net 15 Days",
+                "Currency": "USD",
+                "Tax Amount": 872.87,
+                "Product Details": [
+                    {
+                        "name": "Keyboard",
+                        "quantity": 1,
+                        "price": 1347.3,
+                        "total": 1347.3
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 3,
+                        "price": 1239.0,
+                        "total": 1239.0
+                    },
+                    {
+                        "name": "Monitor",
+                        "quantity": 4,
+                        "price": 1890.4,
+                        "total": 1890.4
+                    },
+                    {
+                        "name": "Laptop",
+                        "quantity": 1,
+                        "price": 372.6,
+                        "total": 372.6
+                    }
+                ],
+                "Total Amount": 5722.17
+            },
+            {
+                "Invoice Number": "INV-2025-003",
+                "User Name": "Rahul Mehta",
+                "Billing Address": {
+                    "Company": "Tech Solutions Pvt. Ltd.",
+                    "Address": "456 AI Lane, Bengaluru, India",
+                    "Email": "anurag@example.com",
+                    "Phone": "+91 9876543210"
+                },
+                "Due Date": "2025-09-15",
+                "Payment Terms": "Net 15 Days",
+                "Currency": "USD",
+                "Tax Amount": 505.48,
+                "Product Details": [
+                    {
+                        "name": "Software License",
+                        "quantity": 1,
+                        "price": 83,
+                        "total": 83.0
+                    },
+                    {
+                        "name": "Monitor",
+                        "quantity": 3,
+                        "price": 265,
+                        "total": 755.25
+                    },
+                    {
+                        "name": "Headset",
+                        "quantity": 1,
+                        "price": 1165,
+                        "total": 1048.5
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 1,
+                        "price": 970,
+                        "total": 921.5
+                    }
+                ],
+                "Total Amount": 3313.74
+            },
+            {
+                "Invoice Number": "INV-2025-001",
+                "User Name": "Anurag Gupta",
+                "Billing Address": "123 Tech Street, Delhi, India",
+                "Due Date": "2025-09-10",
+                "Payment Terms": null,
+                "Currency": "USD",
+                "Tax Amount": 109,
+                "Product Details": [
+                    {
+                        "name": "Laptop",
+                        "quantity": 1,
+                        "price": 1000,
+                        "total": 1000
+                    },
+                    {
+                        "name": "Mouse",
+                        "quantity": 2,
+                        "price": 20,
+                        "total": 40
+                    },
+                    {
+                        "name": "Keyboard",
+                        "quantity": 1,
+                        "price": 50,
+                        "total": 50
+                    }
+                ],
+                "Total Amount": 1199
+            }
+        ],
+        "csv": "data/exports/all_invoices.csv",
+        "xlsx": "data/exports/all_invoices.xlsx"
+    }
+}
